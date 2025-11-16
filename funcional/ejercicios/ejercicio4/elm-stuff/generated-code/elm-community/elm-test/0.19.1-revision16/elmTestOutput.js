@@ -7721,11 +7721,45 @@ var $author$project$Clase4$contiene = F2(
 		}
 	});
 var $author$project$Clase4$dividir = function (arbol) {
-	return $elm$core$Result$Err('No se puede dividir un árbol vacío');
+	if (arbol.$ === 'Empty') {
+		return $elm$core$Result$Err('No se puede dividir un árbol vacío');
+	} else {
+		var v = arbol.a;
+		var left = arbol.b;
+		var right = arbol.c;
+		return $elm$core$Result$Ok(
+			_Utils_Tuple3(v, left, right));
+	}
 };
 var $author$project$Clase4$encontrarCamino = F2(
 	function (valor, arbol) {
-		return $elm$core$Result$Err('El valor no existe en el árbol');
+		if (arbol.$ === 'Empty') {
+			return $elm$core$Result$Err('El valor no existe en el árbol');
+		} else {
+			var v = arbol.a;
+			var left = arbol.b;
+			var right = arbol.c;
+			if (_Utils_eq(v, valor)) {
+				return $elm$core$Result$Ok(_List_Nil);
+			} else {
+				var _v1 = A2($author$project$Clase4$encontrarCamino, valor, left);
+				if (_v1.$ === 'Err') {
+					var _v2 = A2($author$project$Clase4$encontrarCamino, valor, right);
+					if (_v2.$ === 'Err') {
+						var errDer = _v2.a;
+						return $elm$core$Result$Err(errDer);
+					} else {
+						var caminoIzq = _v2.a;
+						return $elm$core$Result$Ok(
+							A2($elm$core$List$cons, $author$project$Clase4$Derecha, caminoIzq));
+					}
+				} else {
+					var caminoDer = _v1.a;
+					return $elm$core$Result$Ok(
+						A2($elm$core$List$cons, $author$project$Clase4$Izquierda, caminoDer));
+				}
+			}
+		}
 	});
 var $author$project$Clase4$encontrarMaximo = function (arbol) {
 	if (arbol.$ === 'Empty') {
@@ -7868,7 +7902,39 @@ var $elm_explorations$test$Expect$equateWith = F4(
 	});
 var $elm_explorations$test$Expect$equal = A2($elm_explorations$test$Expect$equateWith, 'Expect.equal', $elm$core$Basics$eq);
 var $author$project$Clase4$esBST = function (arbol) {
-	return false;
+	if (arbol.$ === 'Empty') {
+		return true;
+	} else {
+		var v = arbol.a;
+		var left = arbol.b;
+		var right = arbol.c;
+		var _v1 = _Utils_Tuple2(left, right);
+		if (_v1.a.$ === 'Empty') {
+			if (_v1.b.$ === 'Empty') {
+				var _v2 = _v1.a;
+				var _v3 = _v1.b;
+				return true;
+			} else {
+				var _v6 = _v1.a;
+				var _v7 = _v1.b;
+				var vr = _v7.a;
+				return (_Utils_cmp(vr, v) > 0) && $author$project$Clase4$esBST(right);
+			}
+		} else {
+			if (_v1.b.$ === 'Empty') {
+				var _v4 = _v1.a;
+				var vl = _v4.a;
+				var _v5 = _v1.b;
+				return (_Utils_cmp(vl, v) < 0) && $author$project$Clase4$esBST(left);
+			} else {
+				var _v8 = _v1.a;
+				var vl = _v8.a;
+				var _v9 = _v1.b;
+				var vr = _v9.a;
+				return (_Utils_cmp(vl, v) < 0) && ((_Utils_cmp(vr, v) > 0) && ($author$project$Clase4$esBST(left) && $author$project$Clase4$esBST(right)));
+			}
+		}
+	}
 };
 var $author$project$Clase4$esHoja = function (arbol) {
 	if (((arbol.$ === 'Node') && (arbol.b.$ === 'Empty')) && (arbol.c.$ === 'Empty')) {
@@ -7886,12 +7952,42 @@ var $author$project$Clase4$esVacio = function (arbol) {
 		return false;
 	}
 };
+var $elm$core$Basics$abs = function (n) {
+	return (n < 0) ? (-n) : n;
+};
 var $author$project$Clase4$estaBalanceado = function (arbol) {
-	return false;
+	if (arbol.$ === 'Empty') {
+		return true;
+	} else {
+		var left = arbol.b;
+		var right = arbol.c;
+		var diferenciaAlturas = $elm$core$Basics$abs(
+			$author$project$Clase4$altura(left) - $author$project$Clase4$altura(right));
+		return ((diferenciaAlturas <= 1) && ($author$project$Clase4$estaBalanceado(left) && $author$project$Clase4$estaBalanceado(right))) ? true : false;
+	}
 };
 var $author$project$Clase4$foldArbol = F3(
 	function (funcion, acumulador, arbol) {
-		return acumulador;
+		foldArbol:
+		while (true) {
+			if (arbol.$ === 'Empty') {
+				return acumulador;
+			} else {
+				var v = arbol.a;
+				var left = arbol.b;
+				var right = arbol.c;
+				var $temp$funcion = funcion,
+					$temp$acumulador = A2(
+					funcion,
+					v,
+					A3($author$project$Clase4$foldArbol, funcion, acumulador, left)),
+					$temp$arbol = right;
+				funcion = $temp$funcion;
+				acumulador = $temp$acumulador;
+				arbol = $temp$arbol;
+				continue foldArbol;
+			}
+		}
 	});
 var $author$project$Clase4$hijoIzquierdo = function (arbol) {
 	if (arbol.$ === 'Empty') {
@@ -7907,11 +8003,34 @@ var $author$project$Clase4$hijoIzquierdo = function (arbol) {
 	}
 };
 var $author$project$Clase4$inorder = function (arbol) {
-	return _List_Nil;
+	if (arbol.$ === 'Empty') {
+		return _List_Nil;
+	} else {
+		var v = arbol.a;
+		var left = arbol.b;
+		var right = arbol.c;
+		return _Utils_ap(
+			$author$project$Clase4$inorder(left),
+			A2(
+				$elm$core$List$cons,
+				v,
+				$author$project$Clase4$inorder(right)));
+	}
 };
 var $author$project$Clase4$mapArbol = F2(
 	function (funcion, arbol) {
-		return $author$project$Clase4$Empty;
+		if (arbol.$ === 'Empty') {
+			return $author$project$Clase4$Empty;
+		} else {
+			var v = arbol.a;
+			var left = arbol.b;
+			var right = arbol.c;
+			return A3(
+				$author$project$Clase4$Node,
+				funcion(v),
+				A2($author$project$Clase4$mapArbol, funcion, left),
+				A2($author$project$Clase4$mapArbol, funcion, right));
+		}
 	});
 var $author$project$Clase4$maximo = function (arbol) {
 	if (arbol.$ === 'Empty') {
@@ -7938,7 +8057,12 @@ var $author$project$Clase4$maximo = function (arbol) {
 };
 var $author$project$Clase4$maybeAResult = F2(
 	function (mensajeError, maybe) {
-		return $elm$core$Result$Err(mensajeError);
+		if (maybe.$ === 'Nothing') {
+			return $elm$core$Result$Err(mensajeError);
+		} else {
+			var valor = maybe.a;
+			return $elm$core$Result$Ok(valor);
+		}
 	});
 var $author$project$Clase4$minimo = function (arbol) {
 	if (arbol.$ === 'Empty') {
@@ -7979,7 +8103,39 @@ var $author$project$Clase4$nietoIzquierdoIzquierdo = function (arbol) {
 		$author$project$Clase4$hijoIzquierdo(arbol));
 };
 var $author$project$Clase4$obtenerMinimo = function (arbol) {
-	return $elm$core$Result$Err('No hay mínimo en un árbol vacío');
+	if (arbol.$ === 'Empty') {
+		return $elm$core$Result$Err('No hay mínimo en un árbol vacío');
+	} else {
+		var v = arbol.a;
+		var left = arbol.b;
+		var right = arbol.c;
+		var minIzq = $author$project$Clase4$obtenerMinimo(left);
+		var minDer = $author$project$Clase4$obtenerMinimo(right);
+		var _v1 = _Utils_Tuple2(minIzq, minDer);
+		if (_v1.a.$ === 'Err') {
+			if (_v1.b.$ === 'Err') {
+				return $elm$core$Result$Ok(v);
+			} else {
+				var valorDer = _v1.b.a;
+				return $elm$core$Result$Ok(
+					A2($elm$core$Basics$min, v, valorDer));
+			}
+		} else {
+			if (_v1.b.$ === 'Err') {
+				var valorIzq = _v1.a.a;
+				return $elm$core$Result$Ok(
+					A2($elm$core$Basics$min, v, valorIzq));
+			} else {
+				var valorIzq = _v1.a.a;
+				var valorDer = _v1.b.a;
+				return $elm$core$Result$Ok(
+					A2(
+						$elm$core$Basics$min,
+						v,
+						A2($elm$core$Basics$min, valorIzq, valorDer)));
+			}
+		}
+	}
 };
 var $author$project$Clase4$obtenerRaiz = function (arbol) {
 	if (arbol.$ === 'Empty') {
@@ -7990,10 +8146,34 @@ var $author$project$Clase4$obtenerRaiz = function (arbol) {
 	}
 };
 var $author$project$Clase4$postorder = function (arbol) {
-	return _List_Nil;
+	if (arbol.$ === 'Empty') {
+		return _List_Nil;
+	} else {
+		var v = arbol.a;
+		var left = arbol.b;
+		var right = arbol.c;
+		return _Utils_ap(
+			$author$project$Clase4$inorder(left),
+			_Utils_ap(
+				$author$project$Clase4$inorder(right),
+				_List_fromArray(
+					[v])));
+	}
 };
 var $author$project$Clase4$preorder = function (arbol) {
-	return _List_Nil;
+	if (arbol.$ === 'Empty') {
+		return _List_Nil;
+	} else {
+		var v = arbol.a;
+		var left = arbol.b;
+		var right = arbol.c;
+		return A2(
+			$elm$core$List$cons,
+			v,
+			_Utils_ap(
+				$author$project$Clase4$inorder(left),
+				$author$project$Clase4$inorder(right)));
+	}
 };
 var $author$project$Clase4$raiz = function (arbol) {
 	if (arbol.$ === 'Empty') {
@@ -8004,11 +8184,60 @@ var $author$project$Clase4$raiz = function (arbol) {
 	}
 };
 var $author$project$Clase4$resultAMaybe = function (result) {
-	return $elm$core$Maybe$Nothing;
+	if (result.$ === 'Err') {
+		return $elm$core$Maybe$Nothing;
+	} else {
+		var value = result.a;
+		return $elm$core$Maybe$Just(value);
+	}
 };
 var $author$project$Clase4$seguirCamino = F2(
 	function (camino, arbol) {
-		return $elm$core$Result$Err('Camino inválido');
+		seguirCamino:
+		while (true) {
+			var _v0 = _Utils_Tuple2(camino, arbol);
+			if (!_v0.a.b) {
+				if (_v0.b.$ === 'Empty') {
+					var _v1 = _v0.b;
+					return $elm$core$Result$Err('Camino inválido');
+				} else {
+					var _v2 = _v0.b;
+					var v = _v2.a;
+					var left = _v2.b;
+					var right = _v2.c;
+					return $elm$core$Result$Ok(v);
+				}
+			} else {
+				if (_v0.b.$ === 'Node') {
+					var _v3 = _v0.a;
+					var head = _v3.a;
+					var tail = _v3.b;
+					var _v4 = _v0.b;
+					var v = _v4.a;
+					var left = _v4.b;
+					var right = _v4.c;
+					if (_Utils_eq(head, $author$project$Clase4$Izquierda)) {
+						var $temp$camino = tail,
+							$temp$arbol = left;
+						camino = $temp$camino;
+						arbol = $temp$arbol;
+						continue seguirCamino;
+					} else {
+						var $temp$camino = tail,
+							$temp$arbol = right;
+						camino = $temp$camino;
+						arbol = $temp$arbol;
+						continue seguirCamino;
+					}
+				} else {
+					var _v5 = _v0.a;
+					var head = _v5.a;
+					var tail = _v5.b;
+					var _v6 = _v0.b;
+					return $elm$core$Result$Err('Camino inválido');
+				}
+			}
+		}
 	});
 var $author$project$Clase4$sumarArbol = function (arbol) {
 	if (arbol.$ === 'Empty') {
@@ -8730,7 +8959,7 @@ var $author$project$Test$Generated$Main$main = A2(
 		processes: 12,
 		report: $author$project$Test$Reporter$Reporter$ConsoleReport($author$project$Console$Text$UseColor),
 		runs: 100,
-		seed: 300387008235678
+		seed: 89239590068291
 	},
 	_List_fromArray(
 		[
@@ -8744,7 +8973,7 @@ var $author$project$Test$Generated$Main$main = A2(
 _Platform_export({'Test':{'Generated':{'Main':{'init':$author$project$Test$Generated$Main$main($elm$json$Json$Decode$int)(0)}}}});}(this));
 return this.Elm;
 })({});
-var pipeFilename = "\\\\.\\pipe\\elm_test-14200-1";
+var pipeFilename = "\\\\.\\pipe\\elm_test-16740-1";
 var net = require('net'),
   client = net.createConnection(pipeFilename);
 

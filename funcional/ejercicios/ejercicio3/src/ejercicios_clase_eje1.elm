@@ -114,7 +114,7 @@ reemplazar lista numeroEliminar numeroCambio nuevaLista =
     head::tail ->
       if head == numeroEliminar then
         reemplazar tail numeroEliminar numeroCambio (nuevaLista ++ [numeroCambio])
-      else
+      else 
         reemplazar tail numeroEliminar numeroCambio (nuevaLista ++ [head])
      
 maximo: List Int -> Int
@@ -132,6 +132,28 @@ minimo lista =
     head::tail ->
       if head < maximo tail then head
       else maximo tail
+
+
+cantidadSatisfactorios: List Int -> (Int -> Bool) -> Int
+cantidadSatisfactorios lista fx =
+  case lista of
+      [] -> 0
+      head::tail ->
+        if fx head then
+          1 + cantidadSatisfactorios tail fx
+        else
+          cantidadSatisfactorios tail fx
+
+sumatoriaValidos: List Int -> (Int -> Bool) -> Int
+sumatoriaValidos lista fx =
+	case lista of
+		[] -> 0
+		head::tail ->
+			if fx head then
+				head + sumatoriaValidos tail fx
+			else
+				sumatoriaValidos tail fx
+
 main = 
   -- media listaPrueba
   -- |> String.fromFloat

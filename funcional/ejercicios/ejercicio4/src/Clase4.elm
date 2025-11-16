@@ -10,6 +10,10 @@ Temas:
 - Mónada Result para manejo de errores
 - Composición monádica con andThen
 -}
+import String exposing (left)
+import String exposing (right)
+import Dict exposing (insert)
+import Dict exposing (values)
 
 
 -- ============================================================================
@@ -322,7 +326,7 @@ dividir : Tree a -> Result String ( a, Tree a, Tree a )
 dividir arbol =
     case arbol of
         Empty -> Err "No se puede dividir un árbol vacío"
-        Node v left right -> Ok (v left right)
+        Node v left right -> Ok (v, left, right)
 
 
 -- 22. Obtener Mínimo con Error
@@ -330,31 +334,76 @@ dividir arbol =
 
 obtenerMinimo : Tree comparable -> Result String comparable
 obtenerMinimo arbol =
-    Err "No hay mínimo en un árbol vacío"
-
+    case arbol of 
+        Empty -> Err "No hay mínimo en un árbol vacío"
+        Node v left right -> 
+            let
+                minIzq = obtenerMinimo left
+                minDer = obtenerMinimo right
+            in
+                case (minIzq, minDer) of
+                    (Err _, Err _) -> Ok v
+                    (Ok valorIzq, Err _) -> Ok (min v valorIzq)
+                    (Err _, Ok valorDer) -> Ok (min v valorDer)
+                    (Ok valorIzq, Ok valorDer) -> Ok (min v (min valorIzq valorDer))
 
 -- 23. Verificar si es BST
 
 
 esBST : Tree comparable -> Bool
 esBST arbol =
-    False
+    case arbol of
+        Empty ->
+            True
+
+        Node v left right ->
+            case (left, right) of
+                (Empty, Empty) ->
+                    True
+
+                (Node vl _ _, Empty) ->
+                    vl < v && esBST left
+
+                (Empty, Node vr _ _) ->
+                    vr > v && esBST right
+
+                (Node vl _ _, Node vr _ _) ->
+                    vl < v && vr > v && esBST left && esBST right
+
 
 
 -- 24. Insertar en BST
 
-
 insertarBST : comparable -> Tree comparable -> Result String (Tree comparable)
 insertarBST valor arbol =
-    Err "El valor ya existe en el árbol"
+    case arbol of
+        Empty -> Ok (Node valor Empty Empty)
+        Node v left right ->
+            if v == valor then 
+                Err "El valor ya existe en el árbol"
+            else if valor < v then
+                case (insertarBST valor left) of
+                    Err err -> Err err
+                    Ok nuevoArbol -> Ok (Node v nuevoArbol right)
+            else
+                case (insertarBST valor right) of
+                    Err err -> Err err
+                    Ok nuevoArbol -> Ok (Node v left nuevoArbol)
 
 
 -- 25. Buscar en BST
 
-
 buscarEnBST : comparable -> Tree comparable -> Result String comparable
 buscarEnBST valor arbol =
-    Err "El valor no se encuentra en el árbol"
+    case arbol of
+        Empty -> Err "El valor no se encuentra en el árbol"
+        Node v left right ->
+            if v == valor then 
+                Ok v
+            else if valor < v then
+                buscarEnBST valor left
+            else
+                buscarEnBST valor right
 
 
 -- 26. Validar BST con Result
@@ -375,7 +424,9 @@ validarBST arbol =
 
 maybeAResult : String -> Maybe a -> Result String a
 maybeAResult mensajeError maybe =
-    Err mensajeError
+    case maybe of
+        Nothing -> Err mensajeError
+        Just valor -> Ok valor
 
 
 -- 28. Result a Maybe
@@ -383,15 +434,24 @@ maybeAResult mensajeError maybe =
 
 resultAMaybe : Result error value -> Maybe value
 resultAMaybe result =
-    Nothing
+    case result of
+        Err _ -> Nothing
+        Ok value -> Just value
 
 
 -- 29. Buscar y Validar
 
-
-buscarPositivo : Int -> Tree Int -> Result String Int
+buscarPositivo: Int -> Tree Int -> Result String Int
 buscarPositivo valor arbol =
-    Err "El valor no se encuentra en el árbol"
+    case arbol of
+        Empty -> Err "El valor no se encuentra en el árbol"
+        Node v left right ->
+            if v == valor then Ok v
+            else
+                case (buscarPositivo valor left) of
+                    Err _ -> buscarPositivo valor right
+                    Ok vlr -> Ok vlr
+
 
 
 -- 30. Pipeline de Validaciones
@@ -420,7 +480,10 @@ buscarEnDosArboles valor arbol1 arbol2 =
 
 inorder : Tree a -> List a
 inorder arbol =
-    []
+    case arbol of
+        Empty -> []
+        Node v left right ->
+            (inorder left)++v::(inorder right)
 
 
 -- 33. Recorrido Preorder
@@ -428,7 +491,10 @@ inorder arbol =
 
 preorder : Tree a -> List a
 preorder arbol =
-    []
+    case arbol of
+        Empty -> []
+        Node v left right ->
+            v::(inorder left)++(inorder right)
 
 
 -- 34. Recorrido Postorder
@@ -436,7 +502,10 @@ preorder arbol =
 
 postorder : Tree a -> List a
 postorder arbol =
-    []
+    case arbol of
+        Empty -> []
+        Node v left right ->
+            (inorder left)++(inorder right)++[v]
 
 
 -- 35. Map sobre Árbol
@@ -444,7 +513,10 @@ postorder arbol =
 
 mapArbol : (a -> b) -> Tree a -> Tree b
 mapArbol funcion arbol =
-    Empty
+    case arbol of
+        Empty -> Empty
+        Node v left right ->
+            Node (funcion v) (mapArbol funcion left) (mapArbol funcion right)
 
 
 -- 36. Filter sobre Árbol
@@ -460,7 +532,10 @@ filterArbol predicado arbol =
 
 foldArbol : (a -> b -> b) -> b -> Tree a -> b
 foldArbol funcion acumulador arbol =
-    acumulador
+    case arbol of
+        Empty -> acumulador
+        Node v left right ->
+            foldArbol funcion (funcion v (foldArbol funcion acumulador left)) right
 
 
 -- 38. Eliminar de BST
@@ -484,8 +559,16 @@ desdeListaBST lista =
 
 estaBalanceado : Tree a -> Bool
 estaBalanceado arbol =
-    False
-
+    case arbol of
+        Empty -> True
+        Node _ left right ->
+            let
+              diferenciaAlturas = abs((altura left) - (altura right))  
+            in
+            if (diferenciaAlturas <= 1 && estaBalanceado left && estaBalanceado right) then
+                True
+            else
+                False
 
 -- 41. Balancear BST
 
@@ -502,10 +585,34 @@ type Direccion
     = Izquierda
     | Derecha
 
+-- dfs :  Tree a ->  List a
+-- dfs arbol =
+--     case arbol of
+--         Empty -> []
+--         Node v left right ->
+--             case left of ->
+--                 Empty ->
+--                     v::(dfs right)
+--                 Node vLeft lLeft lRight ->
+--                     v::vLeft::(dfs left)
+
+
 
 encontrarCamino : a -> Tree a -> Result String (List Direccion)
 encontrarCamino valor arbol =
-    Err "El valor no existe en el árbol"
+    case arbol of
+        Empty -> Err "El valor no existe en el árbol"
+        Node v left right ->
+            if v == valor then
+                Ok []
+            else
+                case (encontrarCamino valor left) of
+                    Err _ -> 
+                        case (encontrarCamino valor right) of
+                            Err errDer -> Err errDer
+                            Ok caminoIzq -> Ok (Derecha::caminoIzq)
+                    Ok caminoDer -> Ok (Izquierda::caminoDer)
+
 
 
 -- 43. Seguir Camino
@@ -513,7 +620,46 @@ encontrarCamino valor arbol =
 
 seguirCamino : List Direccion -> Tree a -> Result String a
 seguirCamino camino arbol =
-    Err "Camino inválido"
+    case (camino, arbol) of
+        ([], Empty) -> Err "Camino inválido"
+        ([], Node v _ _) -> Ok v
+        (head::tail, Node _ left right) -> 
+            if head == Izquierda then
+                seguirCamino tail left
+            else
+                seguirCamino tail right
+        (_::_, Empty) -> Err "Camino inválido"
+    -- case camino of
+    --     [] -> Err "Finalizado"
+    --     head::tail -> 
+    --         if head == Izquierda then
+    --             case arbol of
+    --                 Empty -> Err "Camino inválido"
+    --                 Node _ left _ ->
+    --                     case (seguirCamino tail left) of
+    --                         Err err -> 
+    --                             if err == "Finalizado" then
+    --                                 -- conseguir head de left
+    --                                 case left of
+    --                                     Empty -> Err "Camino inválido"
+    --                                     Node v _ _ -> Ok v
+    --                             else
+    --                                 Err err
+    --                         Ok valor -> Ok valor
+    --         else
+    --             case arbol of
+    --                 Empty -> Err "Camino inválido"
+    --                 Node _ _ right ->
+    --                     case (seguirCamino tail right) of
+    --                         Err err -> 
+    --                             if err == "Finalizado" then
+    --                                 -- conseguir head de left
+    --                                 case right of
+    --                                     Empty -> Err "Camino inválido"
+    --                                     Node v _ _ -> Ok v
+    --                             else
+    --                                 Err err
+    --                         Ok valor -> Ok valor   
 
 
 -- 44. Ancestro Común Más Cercano
